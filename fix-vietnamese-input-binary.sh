@@ -1,43 +1,24 @@
 #!/bin/bash
-#
-# Claude Code Vietnamese IME Fix - BINARY PATCH (EXPERIMENTAL)
-#
-# ⚠️  CẢNH BÁO: ĐÂY LÀ BẢN THỬ NGHIỆM ⚠️
-# - Patch trực tiếp vào binary có thể gây lỗi không lường trước
-# - Binary sẽ được re-sign với ad-hoc signature (không phải Apple signed)
-# - Một số hệ thống có thể từ chối chạy binary không có signature chính thức
-# - Khuyến khích dùng bản npm nếu có thể: npm install -g @anthropic-ai/claude-code
-#
-# Repository: https://github.com/manhit96/claude-code-vietnamese-fix
-# License: MIT
-#
 
 set -e
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Patch marker (embedded in the fix code comment)
 PATCH_MARKER="PHTV_FIX"
 
 echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${MAGENTA}║  Claude Code Vietnamese IME Fix - BINARY PATCH (EXPERIMENTAL)  ║${NC}"
+echo -e "${MAGENTA}║  Claude Code Vietnamese IME Fix - BINARY PATCH                 ║${NC}"
 echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${YELLOW}⚠️  CẢNH BÁO: Đây là bản thử nghiệm, có thể gây lỗi!${NC}"
-echo -e "${YELLOW}   Khuyến khích dùng bản npm nếu có thể.${NC}"
-echo ""
 
-# Function to find Claude Code binary
 find_binary() {
     local binary_path=""
 
-    # Method 1: Check Homebrew cask location
     local homebrew_paths=(
         "/opt/homebrew/bin/claude"
         "/usr/local/bin/claude"
@@ -48,7 +29,6 @@ find_binary() {
     for pattern in "${homebrew_paths[@]}"; do
         for path in $pattern; do
             if [[ -f "$path" ]]; then
-                # Check if it's a binary (not a script)
                 if file "$path" | grep -q "Mach-O"; then
                     binary_path="$path"
                     break 2
@@ -57,7 +37,6 @@ find_binary() {
         done
     done
 
-    # Method 2: Use 'which claude' and check if binary
     if [[ -z "$binary_path" ]] && command -v claude &> /dev/null; then
         local claude_bin=$(which claude)
         local resolved_path=$(realpath "$claude_bin" 2>/dev/null || readlink -f "$claude_bin" 2>/dev/null || echo "$claude_bin")
@@ -70,18 +49,15 @@ find_binary() {
     echo "$binary_path"
 }
 
-# Function to check if binary is already patched
 is_patched() {
     local binary_path="$1"
     strings "$binary_path" 2>/dev/null | grep -q "$PATCH_MARKER"
 }
 
-# Function to get Claude Code version
 get_version() {
     claude --version 2>/dev/null | head -1 || echo "unknown"
 }
 
-# Function to apply patch
 apply_patch() {
     local binary_path="$1"
     local backup_path="${binary_path}.backup-$(date +%Y%m%d-%H%M%S)"
@@ -92,7 +68,6 @@ apply_patch() {
 
     echo -e "${YELLOW}→ Đang áp dụng patch...${NC}"
 
-    # Use Python for binary patching
     python3 - "$binary_path" "$PATCH_MARKER" << 'PYTHON_EOF'
 import sys
 
@@ -104,18 +79,11 @@ with open(binary_path, 'rb') as f:
 
 original_size = len(content)
 
-# Original bug block (239 bytes) - Version 2.1.15
-# Bug: processes backspaces for DEL chars but returns without inserting replacement text
-# NOTE: In the binary, "\\x7F" appears as the 4-char string (backslash + x + 7 + F)
-original_block = b'if(!AT.backspace&&!AT.delete&&p.includes("\\x7F")){let WT=(p.match(/\\x7f/g)||[]).length,QT=y;for(let NT=0;NT<WT;NT++)QT=QT.deleteTokenBefore()??QT.backspace();if(!y.equals(QT)){if(y.text!==QT.text)R(QT.text);w(QT.offset)}neR(),aeR();return}'
+original_block = b'if(!AT.backspace&&!AT.delete&&p.includes("\\\\x7F")){let WT=(p.match(/\\\\x7f/g)||[]).length,QT=y;for(let NT=0;NT<WT;NT++)QT=QT.deleteTokenBefore()??QT.backspace();if(!y.equals(QT)){if(y.text!==QT.text)R(QT.text);w(QT.offset)}neR(),aeR();return}'
 
-# Fixed version (221 bytes)
-# Fix: after backspace, insert the clean text (without DEL chars)
-fixed_code = b'if(!AT.backspace&&!AT.delete&&p.includes("\\x7F")){let W=p.split("\\x7f").length-1,Q=y;while(W--)Q=Q.deleteTokenBefore()??Q.backspace();for(let c of p.replace(/\\x7f/g,""))Q=Q.insert(c);R(Q.text);w(Q.offset);neR(),aeR();return'
+fixed_code = b'if(!AT.backspace&&!AT.delete&&p.includes("\\\\x7F")){let W=p.split("\\\\x7f").length-1,Q=y;while(W--)Q=Q.deleteTokenBefore()??Q.backspace();for(let c of p.replace(/\\\\x7f/g,""))Q=Q.insert(c);R(Q.text);w(Q.offset);neR(),aeR();return'
 
-# Add padding with marker to maintain same length (215 bytes total)
-padding_needed = len(original_block) - len(fixed_code) - 1  # -1 for closing }
-# Use marker in comment for detection
+padding_needed = len(original_block) - len(fixed_code) - 1
 marker_comment = f'/*{patch_marker}*/'.encode()
 extra_padding = padding_needed - len(marker_comment)
 if extra_padding < 0:
@@ -128,12 +96,10 @@ if len(original_block) != len(fixed_padded):
     print(f"ERROR: Length mismatch: {len(original_block)} vs {len(fixed_padded)}")
     sys.exit(1)
 
-# Check if already patched
 if patch_marker.encode() in content:
     print("ALREADY_PATCHED")
     sys.exit(0)
 
-# Find and replace all occurrences
 idx = content.find(original_block)
 count = 0
 while idx != -1:
@@ -175,7 +141,6 @@ else:
         return 1
     fi
 
-    # Re-sign binary with ad-hoc signature
     echo -e "${YELLOW}→ Đang re-sign binary...${NC}"
     codesign --remove-signature "$binary_path" 2>/dev/null || true
     if ! codesign -s - -f "$binary_path" 2>/dev/null; then
@@ -185,9 +150,8 @@ else:
         return 1
     fi
 
-    # Verify binary still works
     echo -e "${YELLOW}→ Đang kiểm tra binary...${NC}"
-    if ! "$binary_path" --version &>/dev/null; then
+    if ! "$binary_path" --version &> /dev/null; then
         echo -e "${RED}✗ Binary không chạy được sau khi patch!${NC}"
         echo -e "${YELLOW}→ Đang khôi phục từ backup...${NC}"
         cp "$backup_path" "$binary_path"
@@ -197,11 +161,9 @@ else:
     return 0
 }
 
-# Function to restore from backup
 restore_backup() {
     local binary_path="$1"
 
-    # Find latest backup
     local backup_dir=$(dirname "$binary_path")
     local binary_name=$(basename "$binary_path")
     local latest_backup=$(ls -t "${binary_path}.backup-"* 2>/dev/null | head -1)
@@ -218,12 +180,10 @@ restore_backup() {
 
     cp "$latest_backup" "$binary_path"
 
-    # Re-sign with ad-hoc (backup might have original signature which won't work after copy)
     codesign --remove-signature "$binary_path" 2>/dev/null || true
     codesign -s - -f "$binary_path" 2>/dev/null || true
 
-    # Verify
-    if "$binary_path" --version &>/dev/null; then
+    if "$binary_path" --version &> /dev/null; then
         echo -e "${GREEN}✓ Đã khôi phục thành công!${NC}"
         rm -f "$latest_backup"
         echo -e "  Đã xóa backup: $latest_backup"
@@ -234,7 +194,6 @@ restore_backup() {
     fi
 }
 
-# Function to list backups
 list_backups() {
     local binary_path="$1"
     local backups=$(ls -t "${binary_path}.backup-"* 2>/dev/null)
@@ -252,7 +211,6 @@ list_backups() {
     done
 }
 
-# Main script
 main() {
     local action="${1:-patch}"
 
@@ -264,19 +222,16 @@ main() {
         echo -e "${RED}✗ Không tìm thấy Claude Code binary.${NC}"
         echo ""
         echo -e "  Script này chỉ hỗ trợ bản binary (Homebrew/native installer)."
-        echo -e "  Nếu bạn cài qua npm, hãy dùng script khác:"
-        echo -e "  ${GREEN}curl -fsSL https://raw.githubusercontent.com/manhit96/claude-code-vietnamese-fix/main/patch-claude-code-vn-npm.sh | bash${NC}"
+        echo -e "  Nếu bạn cài qua npm, hãy dùng script khác: fix-vietnamese-input.sh"
         exit 1
     fi
 
     echo -e "  Đường dẫn: ${BLUE}$BINARY_PATH${NC}"
     echo -e "  Phiên bản: ${BLUE}$(get_version)${NC}"
 
-    # Check if it's really a binary
     if ! file "$BINARY_PATH" | grep -q "Mach-O"; then
         echo -e "${RED}✗ File không phải là Mach-O binary.${NC}"
-        echo -e "  Có vẻ bạn đang dùng bản npm. Hãy dùng script khác:"
-        echo -e "  ${GREEN}curl -fsSL https://raw.githubusercontent.com/manhit96/claude-code-vietnamese-fix/main/patch-claude-code-vn-npm.sh | bash${NC}"
+        echo -e "  Có vẻ bạn đang dùng bản npm. Hãy dùng script khác: fix-vietnamese-input.sh"
         exit 1
     fi
 
@@ -309,7 +264,6 @@ main() {
                 echo ""
                 echo -e "${RED}✗ Patch thất bại!${NC}"
                 echo -e "  Code structure có thể đã thay đổi trong phiên bản mới."
-                echo -e "  Vui lòng báo lỗi tại: ${BLUE}https://github.com/manhit96/claude-code-vietnamese-fix/issues${NC}"
                 exit 1
             fi
             ;;
@@ -333,7 +287,6 @@ main() {
                 echo -e "  Trạng thái: ${RED}✗ Chưa patch${NC}"
             fi
 
-            # Check signature
             local sig_status=$(codesign -dvv "$BINARY_PATH" 2>&1 | grep -i "signature" | head -1)
             echo -e "  Signature: ${BLUE}$sig_status${NC}"
 
@@ -353,9 +306,6 @@ main() {
             echo "  restore      - Khôi phục binary gốc từ backup"
             echo "  status       - Kiểm tra trạng thái patch"
             echo "  list-backups - Liệt kê các file backup"
-            echo ""
-            echo -e "${YELLOW}⚠️  Đây là bản thử nghiệm cho binary. Nếu dùng npm, hãy dùng:${NC}"
-            echo -e "  ${GREEN}curl -fsSL https://raw.githubusercontent.com/manhit96/claude-code-vietnamese-fix/main/patch-claude-code-vn-npm.sh | bash${NC}"
             exit 1
             ;;
     esac
