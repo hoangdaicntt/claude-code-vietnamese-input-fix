@@ -19,7 +19,23 @@ Script này tự động patch file `cli.js` (bản npm) hoặc binary (bản Ho
 
 ## Cài đặt và sử dụng
 
-### Cài đặt nhanh với curl (khuyến khích)
+### 🚀 Auto-Patch (Khuyến nghị - Hoàn toàn tự động)
+
+**Giải pháp 1 lệnh cho mọi phiên bản:**
+
+```bash
+./auto-patch.sh
+```
+
+Script sẽ tự động:
+- ✅ Phát hiện pattern Vietnamese IME
+- ✅ Generate fixed code
+- ✅ Apply patch
+- ✅ Verify và re-sign binary
+
+Xem [AUTO-PATCH.md](AUTO-PATCH.md) để biết chi tiết.
+
+### Cài đặt nhanh với curl
 
 **Bản binary (Homebrew):**
 ```bash
