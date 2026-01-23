@@ -1,6 +1,6 @@
 # Auto-Detection Tool for Vietnamese IME Pattern
 
-Script `auto-detect-pattern.sh` tự động phát hiện và phân tích pattern Vietnamese IME trong các phiên bản mới của Claude Code.
+Script `detect.sh` tự động phát hiện và phân tích pattern Vietnamese IME trong các phiên bản mới của Claude Code.
 
 ## Mục đích
 
@@ -14,7 +14,7 @@ Khi Claude Code cập nhật phiên bản mới, minification có thể thay đ�
 ## Cách sử dụng
 
 ```bash
-./auto-detect-pattern.sh
+./detect.sh
 ```
 
 ## Kết quả
@@ -79,12 +79,12 @@ fixed_code = b'if(!e.backspace&&!e.delete&&n.includes...'
 
 1. Chạy auto-detect script:
    ```bash
-   ./auto-detect-pattern.sh
+   ./detect.sh
    ```
 
 2. Copy `original_block` và `fixed_code` từ output
 
-3. Update `fix-vietnamese-input-binary.sh`:
+3. Update `patch-binary.sh`:
    ```python
    # Thay thế 2 dòng này với giá trị mới
    original_block = b'...'
@@ -94,12 +94,12 @@ fixed_code = b'if(!e.backspace&&!e.delete&&n.includes...'
 4. Test với backup:
    ```bash
    # Dry-run test
-   python3 -c "..." 
+   python3 -c "..."
    ```
 
 5. Áp dụng patch:
    ```bash
-   ./fix-vietnamese-input-binary.sh patch
+   ./patch-binary.sh patch
    ```
 
 6. Commit changes và update CHANGELOG.md

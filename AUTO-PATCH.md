@@ -1,11 +1,11 @@
 # Auto-Patch Script - One-Command Solution
 
-Script `auto-patch.sh` là giải pháp **hoàn toàn tự động** - chỉ cần 1 lệnh duy nhất để patch Claude Code cho mọi phiên bản!
+Script `patch.sh` là giải pháp **hoàn toàn tự động** - chỉ cần 1 lệnh duy nhất để patch Claude Code cho mọi phiên bản!
 
 ## 🚀 Quick Start
 
 ```bash
-./auto-patch.sh
+./patch.sh
 ```
 
 Đó là tất cả! Script sẽ tự động:
@@ -151,8 +151,8 @@ Script handles các trường hợp:
 
 ## 🆚 So sánh với các script khác
 
-| Feature | auto-patch.sh | fix-vietnamese-input-binary.sh | auto-detect-pattern.sh |
-|---------|---------------|-------------------------------|------------------------|
+| Feature | patch.sh | patch-binary.sh | detect.sh |
+|---------|----------|-----------------|-----------|
 | Tự động detect pattern | ✅ | ❌ (hardcoded) | ✅ |
 | Tự động apply patch | ✅ | ✅ | ❌ (chỉ analyze) |
 | Cần update khi version mới | ❌ | ✅ | ❌ |
@@ -164,23 +164,23 @@ Script handles các trường hợp:
 ### End Users (Recommended)
 ```bash
 # Chỉ cần 1 lệnh duy nhất
-./auto-patch.sh
+./patch.sh
 ```
 
 ### Maintainers/Developers
 ```bash
 # Khi cần xem chi tiết pattern
-./auto-detect-pattern.sh
+./detect.sh
 
 # Khi muốn dùng hardcoded pattern (faster)
-./fix-vietnamese-input-binary.sh patch
+./patch-binary.sh patch
 ```
 
 ## 🔄 Rollback
 
 Nếu cần rollback:
 ```bash
-./fix-vietnamese-input-binary.sh restore
+./patch-binary.sh restore
 ```
 
 ## 📝 Notes
@@ -200,5 +200,5 @@ Không cần:
 - ❌ Manual analysis binary
 
 Chỉ cần:
-- ✅ Run `./auto-patch.sh`
+- ✅ Run `./patch.sh`
 - ✅ Done!
