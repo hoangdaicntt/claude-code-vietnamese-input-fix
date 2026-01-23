@@ -101,6 +101,22 @@ chmod +x fix-vietnamese-input.sh
 - Sau khi patch, khởi động lại Claude Code để áp dụng thay đổi
 - Bản binary được re-sign với ad-hoc signature
 
+## 🔧 Auto-Detection Tool (cho maintainers)
+
+Khi Claude Code cập nhật phiên bản mới, sử dụng tool tự động phát hiện pattern:
+
+```bash
+./auto-detect-pattern.sh
+```
+
+Tool này sẽ:
+- ✅ Tự động tìm pattern Vietnamese IME trong binary
+- ✅ Phát hiện tên biến đã thay đổi do minification  
+- ✅ Generate fixed code với padding chính xác
+- ✅ Cung cấp code ready-to-use để update patch script
+
+Xem [AUTO-DETECT.md](AUTO-DETECT.md) để biết thêm chi tiết.
+
 ## Báo lỗi
 
 Nếu gặp vấn đề, vui lòng tạo issue tại [GitHub Issues](https://github.com/hoangdaicntt/claude-code-vietnamese-input-fix/issues)
