@@ -13,30 +13,47 @@ PATCH_MARKER="PHTV_FIX"
 
 echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${MAGENTA}║  Claude Code Vietnamese IME Fix - BINARY PATCH                 ║${NC}"
+echo -e "${MAGENTA}║  Supports: Claude Code v2.1.17                                 ║${NC}"
 echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 find_binary() {
     local binary_path=""
 
-    local homebrew_paths=(
-        "/opt/homebrew/bin/claude"
-        "/usr/local/bin/claude"
-        "/opt/homebrew/Caskroom/claude-code/*/claude"
-        "/usr/local/Caskroom/claude-code/*/claude"
-    )
-
-    for pattern in "${homebrew_paths[@]}"; do
-        for path in $pattern; do
-            if [[ -f "$path" ]]; then
-                if file "$path" | grep -q "Mach-O"; then
-                    binary_path="$path"
-                    break 2
-                fi
+    # Check new location first (Claude Code 2.1.17+)
+    local user_share="$HOME/.local/share/claude/versions"
+    if [[ -d "$user_share" ]]; then
+        # Find the latest version
+        local latest_version=$(ls -1 "$user_share" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+        if [[ -n "$latest_version" ]] && [[ -f "$user_share/$latest_version" ]]; then
+            if file "$user_share/$latest_version" | grep -q "Mach-O"; then
+                binary_path="$user_share/$latest_version"
             fi
-        done
-    done
+        fi
+    fi
 
+    # Fallback to Homebrew paths if not found
+    if [[ -z "$binary_path" ]]; then
+        local homebrew_paths=(
+            "/opt/homebrew/bin/claude"
+            "/usr/local/bin/claude"
+            "/opt/homebrew/Caskroom/claude-code/*/claude"
+            "/usr/local/Caskroom/claude-code/*/claude"
+        )
+
+        for pattern in "${homebrew_paths[@]}"; do
+            for path in $pattern; do
+                if [[ -f "$path" ]]; then
+                    if file "$path" | grep -q "Mach-O"; then
+                        binary_path="$path"
+                        break 2
+                    fi
+                fi
+            done
+        done
+    fi
+
+    # Fallback to `which claude` if still not found
     if [[ -z "$binary_path" ]] && command -v claude &> /dev/null; then
         local claude_bin=$(which claude)
         local resolved_path=$(realpath "$claude_bin" 2>/dev/null || readlink -f "$claude_bin" 2>/dev/null || echo "$claude_bin")
@@ -79,9 +96,16 @@ with open(binary_path, 'rb') as f:
 
 original_size = len(content)
 
-original_block = b'if(!AT.backspace&&!AT.delete&&p.includes("\\\\x7F")){let WT=(p.match(/\\\\x7f/g)||[]).length,QT=y;for(let NT=0;NT<WT;NT++)QT=QT.deleteTokenBefore()??QT.backspace();if(!y.equals(QT)){if(y.text!==QT.text)R(QT.text);w(QT.offset)}neR(),aeR();return}'
+# Pattern for Claude Code v2.1.17 (237 bytes)
+# This is the buggy code that only deletes backspace chars without preserving actual input
+original_block = b'if(!e.backspace&&!e.delete&&n.includes("\\x7F")){let CT=(n.match(/\\x7f/g)||[]).length,ZT=y;for(let IT=0;IT<CT;IT++)ZT=ZT.deleteTokenBefore()??ZT.backspace();if(!y.equals(ZT)){if(y.text!==ZT.text)R(ZT.text);b(ZT.offset)}n_A(),a_A();return}'
 
-fixed_code = b'if(!AT.backspace&&!AT.delete&&p.includes("\\\\x7F")){let W=p.split("\\\\x7f").length-1,Q=y;while(W--)Q=Q.deleteTokenBefore()??Q.backspace();for(let c of p.replace(/\\\\x7f/g,""))Q=Q.insert(c);R(Q.text);w(Q.offset);neR(),aeR();return'
+# Fixed code that handles Vietnamese IME correctly (221 bytes before padding)
+# This properly:
+# 1. Counts backspace chars (\x7f) 
+# 2. Deletes them from cursor
+# 3. Inserts the actual character inputs (after removing \x7f)
+fixed_code = b'if(!e.backspace&&!e.delete&&n.includes("\\x7F")){let C=n.split("\\x7f").length-1,Z=y;while(C--)Z=Z.deleteTokenBefore()??Z.backspace();for(let c of n.replace(/\\x7f/g,""))Z=Z.insert(c);R(Z.text);b(Z.offset);n_A(),a_A();return'
 
 padding_needed = len(original_block) - len(fixed_code) - 1
 marker_comment = f'/*{patch_marker}*/'.encode()

@@ -2,6 +2,11 @@
 
 Công cụ sửa lỗi gõ tiếng Việt trong Claude Code CLI.
 
+## ✅ Phiên bản hỗ trợ
+
+- **Claude Code v2.1.17** (Latest) ✅
+- Claude Code v2.1.15 ✅
+
 ## Vấn đề
 
 Claude Code CLI có lỗi khi gõ tiếng Việt với bộ gõ (IME):
@@ -10,7 +15,7 @@ Claude Code CLI có lỗi khi gõ tiếng Việt với bộ gõ (IME):
 
 ## Giải pháp
 
-Script này tự động patch file `cli.js` (bản npm) hoặc binary (bản Homebrew) của Claude Code để sửa lỗi gõ tiếng Việt.
+Script này tự động patch file `cli.js` (bản npm) hoặc binary (bản Homebrew/native) của Claude Code để sửa lỗi gõ tiếng Việt.
 
 ## Cài đặt và sử dụng
 
