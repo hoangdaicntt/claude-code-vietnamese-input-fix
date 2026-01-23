@@ -21,11 +21,6 @@ Script này tự động patch file `cli.js` (bản npm) hoặc binary (bản Ho
 
 ### Cài đặt nhanh với curl (khuyến khích)
 
-**Bản npm:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/hoangdaicntt/claude-code-vietnamese-input-fix/main/fix-vietnamese-input.sh | bash
-```
-
 **Bản binary (Homebrew):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hoangdaicntt/claude-code-vietnamese-input-fix/main/fix-vietnamese-input-binary.sh | bash
